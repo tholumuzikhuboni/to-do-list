@@ -4,39 +4,47 @@ const prioritySelect = document.getElementById('priority');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
 const searchTask = document.getElementById('searchTask');
-const sortTasks = document.getElementById('sortTasks');
 const progressBar = document.getElementById('progressBar');
+const progressLabel = document.getElementById('progressLabel');
+const sortPriorityBtn = document.getElementById('sortPriorityBtn');
+const sortCreationBtn = document.getElementById('sortCreationBtn');
 
 // Load tasks from localStorage on page load
-document.addEventListener('DOMContentLoaded', loadTasks);
+document.addEventListener('DOMContentLoaded', () => {
+  loadTasks();
+  updateProgress();
+});
 
 // Event Listeners
 addTaskBtn.addEventListener('click', addTask);
 taskList.addEventListener('click', handleTaskAction);
 searchTask.addEventListener('input', searchTasks);
-sortTasks.addEventListener('change', sortTaskList);
+sortPriorityBtn.addEventListener('click', sortTasksByPriority);
+sortCreationBtn.addEventListener('click', sortTasksByCreationDate);
 
 function addTask() {
   const taskName = taskInput.value.trim();
   const priority = prioritySelect.value;
-  const creationDate = new Date().toISOString();
 
   if (!taskName) {
-    alert('Task cannot be empty!');
+    showAlert('Task cannot be empty!', 'danger');
     return;
   }
 
   const task = {
     name: taskName,
     priority: priority,
-    creationDate: creationDate,
     completed: false,
+    createdAt: new Date().toISOString(),
   };
+
   saveTask(task);
-  renderTasks();
+  renderTask(task);
+  updateProgress();
 
   taskInput.value = '';
   prioritySelect.value = 'low';
+  showAlert('Task added successfully!', 'success');
 }
 
 function saveTask(task) {
@@ -46,32 +54,22 @@ function saveTask(task) {
 }
 
 function loadTasks() {
-  renderTasks();
+  const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  tasks.forEach(renderTask);
 }
 
-function renderTasks() {
-  const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-  taskList.innerHTML = '';
-
-  // Sort tasks before rendering
-  sortTasksAndRender(tasks);
-
-  tasks.forEach((task) => {
-    const li = document.createElement('li');
-    li.className = `list-group-item priority-${task.priority}`;
-    li.innerHTML = `
-      <div>
-        <span. class="${task.completed ? 'completed' : ''}">${task.name}</span>
-      </div>
-      <div class="task-actions">
-        <button class="btn btn-success btn-sm complete-btn">${task.completed ? 'Undo' : 'Complete'}</button>
-        <button class="btn btn-danger btn-sm delete-btn">Delete</button>
-      </div>
-    `;
-    taskList.appendChild(li);
-  });
-
-  updateProgress();
+function renderTask(task) {
+  const li = document.createElement('li');
+  li.className = `list-group-item priority-${task.priority}`;
+  li.dataset.createdAt = task.createdAt;
+  li.innerHTML = `
+    <span class="${task.completed ? 'completed' : ''}">${task.name}</span>
+    <div class="task-actions">
+      <button class="btn btn-success btn-sm complete-btn">${task.completed ? 'Undo' : 'Complete'}</button>
+      <button class="btn btn-danger btn-sm delete-btn">Delete</button>
+    </div>
+  `;
+  taskList.appendChild(li);
 }
 
 function handleTaskAction(e) {
@@ -91,7 +89,10 @@ function toggleCompleteTask(button) {
   task.completed = !task.completed;
   localStorage.setItem('tasks', JSON.stringify(tasks));
 
-  renderTasks();
+  li.querySelector('span').classList.toggle('completed');
+  button.textContent = task.completed ? 'Undo' : 'Complete';
+
+  updateProgress();
 }
 
 function deleteTask(button) {
@@ -102,7 +103,9 @@ function deleteTask(button) {
   const updatedTasks = tasks.filter((task) => task.name !== taskName);
   localStorage.setItem('tasks', JSON.stringify(updatedTasks));
 
-  renderTasks();
+  li.remove();
+  updateProgress();
+  showAlert('Task deleted successfully!', 'info');
 }
 
 function searchTasks() {
@@ -115,29 +118,43 @@ function searchTasks() {
   });
 }
 
-function sortTaskList() {
-  renderTasks();
+function sortTasksByPriority() {
+  const tasks = Array.from(document.querySelectorAll('#taskList li'));
+
+  tasks.sort((a, b) => {
+    const priorities = { low: 1, medium: 2, high: 3 };
+    return priorities[b.classList[1].split('-')[1]] - priorities[a.classList[1].split('-')[1]];
+  });
+
+  tasks.forEach((task) => taskList.appendChild(task));
 }
 
-function sortTasksAndRender(tasks) {
-  const sortBy = sortTasks.value;
+function sortTasksByCreationDate() {
+  const tasks = Array.from(document.querySelectorAll('#taskList li'));
 
-  if (sortBy === 'priority') {
-    tasks.sort((a, b) => {
-      const priorities = { high: 3, medium: 2, low: 1 };
-      return priorities[b.priority] - priorities[a.priority];
-    });
-  } else if (sortBy === 'creationDate') {
-    tasks.sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate));
-  }
+  tasks.sort((a, b) => new Date(a.dataset.createdAt) - new Date(b.dataset.createdAt));
+
+  tasks.forEach((task) => taskList.appendChild(task));
 }
 
 function updateProgress() {
   const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-  const completedTasks = tasks.filter((task) => task.completed).length;
   const totalTasks = tasks.length;
-  const progress = totalTasks ? (completedTasks / totalTasks) * 100 : 0;
+  const completedTasks = tasks.filter((task) => task.completed).length;
+  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   progressBar.style.width = `${progress}%`;
-  progressBar.textContent = `${Math.round(progress)}%`;
+  progressBar.setAttribute('aria-valuenow', progress);
+  progressLabel.textContent = `Progress: ${progress}%`;
 }
+
+function showAlert(message, type) {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} mt-3`;
+  alertDiv.textContent = message;
+
+  const container = document.querySelector('.container');
+  container.prepend(alertDiv);
+
+  setTimeout(() => alertDiv.remove(), 3000);
+  }
