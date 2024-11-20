@@ -1,0 +1,47 @@
+body {
+  background: #f8f9fa;
+  font-family: 'Roboto', sans-serif;
+}
+
+.card {
+  border-radius: 15px;
+}
+
+#taskList .list-group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px;
+  margin-bottom: 10px; /* Add spacing between tasks */
+  padding: 15px; /* Ensure consistent padding */
+}
+
+.priority-low {
+  background-color: #e9f7ef;
+  color: #2e7d32;
+}
+
+.priority-medium {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.priority-high {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.task-actions button {
+  margin-left: 5px;
+}
+
+.completed {
+  text-decoration: line-through;
+  color: gray;
+}
+
+#taskInput,
+#searchTask {
+  padding: 10px; /* Adjust for better readability */
+  }
+  
