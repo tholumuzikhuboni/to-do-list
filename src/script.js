@@ -27,7 +27,7 @@ function addTask() {
   const priority = prioritySelect.value;
 
   if (!taskName) {
-    showAlert('Task cannot be empty!', 'danger');
+    alert('Task cannot be empty!');
     return;
   }
 
@@ -42,9 +42,8 @@ function addTask() {
   renderTask(task);
   updateProgress();
 
-  taskInput.value = '';
-  prioritySelect.value = 'low';
-  showAlert('Task added successfully!', 'success');
+  taskInput.value = ''; // Clear the input field after adding
+  prioritySelect.value = 'low'; // Reset priority to default
 }
 
 function saveTask(task) {
@@ -105,7 +104,6 @@ function deleteTask(button) {
 
   li.remove();
   updateProgress();
-  showAlert('Task deleted successfully!', 'info');
 }
 
 function searchTasks() {
@@ -147,14 +145,3 @@ function updateProgress() {
   progressBar.setAttribute('aria-valuenow', progress);
   progressLabel.textContent = `Progress: ${progress}%`;
 }
-
-function showAlert(message, type) {
-  const alertDiv = document.createElement('div');
-  alertDiv.className = `alert alert-${type} mt-3`;
-  alertDiv.textContent = message;
-
-  const container = document.querySelector('.container');
-  container.prepend(alertDiv);
-
-  setTimeout(() => alertDiv.remove(), 3000);
-  }
